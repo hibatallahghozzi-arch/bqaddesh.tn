@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'Ping-Bold';
+  src: local('Ping-Bold'), local('Ping Bold'), local('PingBold'), local('Ping-Arabic-Bold'), local('PingAR-Bold'), local('PingAR Bold');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Ping';
+  src: local('Ping-Regular'), local('Ping Regular'), local('Ping'), local('Ping-Arabic'), local('PingAR');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+*:not(svg):not(i) {
+  font-family: 'Ping-Bold', 'Ping', 'Ping AR', 'Readex Pro', 'Cairo', sans-serif !important;
+}
+
+body, html, input, button, select, textarea {
+  font-family: 'Ping-Bold', 'Ping', 'Ping AR', 'Readex Pro', 'Cairo', sans-serif !important;
+}
+
+@layer utilities {
+  .font-cairo, .font-ping, .font-ping-bold {
+    font-family: 'Ping-Bold', 'Ping', 'Ping AR', 'Readex Pro', 'Cairo', sans-serif !important;
+  }
+}
+
+/* Custom scrollbar for horizontal product selector */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Leaflet map custom popups & markers RTL styling */
+.custom-pin-icon, .user-pin-icon {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.leaflet-popup-content-wrapper {
+  direction: rtl;
+  text-align: right;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  font-family: 'Ping-Bold', 'Ping', 'Readex Pro', 'Cairo', sans-serif !important;
+  padding: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.leaflet-container {
+  font-family: 'Ping-Bold', 'Ping', 'Readex Pro', 'Cairo', sans-serif !important;
+  z-index: 10;
+  background-color: #f1f5f9;
+}
+
