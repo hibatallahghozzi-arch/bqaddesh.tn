@@ -14,6 +14,15 @@ import { AddProductModal } from './components/AddProductModal';
 import { Award, Heart, Share2 } from 'lucide-react';
 import { supabase } from './lib/supabase';
 
+// 🛡️ مادة افتراضية لحماية الشاشة
+const DEFAULT_FALLBACK_PRODUCT: Product = {
+  id: 'tomate',
+  name: 'طماطم',
+  category: 'vegetables',
+  officialPrice: 1.8,
+  emoji: '🍅',
+};
+
 export default function App() {
   // Products & Submissions state
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
@@ -23,11 +32,11 @@ export default function App() {
   // Location state (Defaulting to Cité Ghazela, Ariana)
   const [currentLocation, setCurrentLocation] = useState<LocationState>({
     wilayaId: 'ariana',
-    wilayaName: WILAYAS_DATA[0].name,
-    districtId: WILAYAS_DATA[0].districts[0].id,
-    districtName: WILAYAS_DATA[0].districts[0].name,
-    lat: WILAYAS_DATA[0].districts[0].lat,
-    lng: WILAYAS_DATA[0].districts[0].lng,
+    wilayaName: WILAYAS_DATA[0]?.name || 'أريانة',
+    districtId: WILAYAS_DATA[0]?.districts[0]?.id || 'ghazela',
+    districtName: WILAYAS_DATA[0]?.districts[0]?.name || 'حي الغزالة',
+    lat: WILAYAS_DATA[0]?.districts[0]?.lat || 36.89,
+    lng: WILAYAS_DATA[0]?.districts[0]?.lng || 10.18,
     isAutoDetected: false,
   });
 
@@ -36,122 +45,172 @@ export default function App() {
   const [isAddMarketModalOpen, setIsAddMarketModalOpen] = useState(false);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
 
+  // 🎯 Helper: البحث عن إحداثيات الحي من WILAYAS_DATA
+  const getCoordinatesForDistrict = (districtName?: string, wilayaName?: string) => {
+    for (const wilaya of WILAYAS_DATA) {
+      if (!wilayaName || wilaya.name === wilayaName) {
+        const dist = wilaya.districts.find((d) => d.name === districtName || d.id === districtName);
+        if (dist) return { lat: dist.lat, lng: dist.lng };
+      }
+    }
+    // Fallback إلى الموقع الحالي أو تونس العاصمة
+    return {
+      lat: currentLocation.lat || 36.89,
+      lng: currentLocation.lng || 10.18,
+    };
+  };
+
   // 🎯 1. Fetch Products & Submissions live min Supabase
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch Products
-      const { data: prodData, error: prodError } = await supabase.from('products').select('*');
-      if (prodError) console.error('Erreur Supabase Products:', prodError);
+      try {
+        // Fetch Products
+        const { data: prodData, error: prodError } = await supabase.from('products').select('*');
+        if (prodError) console.error('Erreur Supabase Products:', prodError);
 
-      let fetchedProducts: Product[] = INITIAL_PRODUCTS;
-      if (prodData && prodData.length > 0) {
-        fetchedProducts = prodData.map((item) => ({
-          id: item.id,
-          name: item.name_ar,
-          category: item.category as any,
-          officialPrice: item.official_price,
-          emoji: item.emoji || '🛒',
-        }));
-        setProducts(fetchedProducts);
-        if (fetchedProducts[0]?.id) {
-          setSelectedProductId(fetchedProducts[0].id);
+        let fetchedProducts: Product[] = [];
+        if (prodData && prodData.length > 0) {
+          fetchedProducts = prodData.map((item) => {
+            const rawPrice = Number(item.official_price) || 0;
+            const finalPrice = rawPrice >= 100 ? rawPrice / 1000 : rawPrice;
+
+            return {
+              id: String(item.id || Date.now()),
+              name: item.name_ar || item.name || 'مادة جديدة',
+              category: item.category || 'vegetables',
+              officialPrice: finalPrice,
+              emoji: item.emoji || '🛒',
+            };
+          });
+          setProducts(fetchedProducts);
+          if (fetchedProducts.length > 0) {
+            setSelectedProductId(fetchedProducts[0].id);
+          }
         }
-      }
 
-      // Fetch Price Submissions (تصاريح المواطنين)
-      const { data: subData, error: subError } = await supabase
-        .from('price_submissions')
-        .select('*')
-        .order('created_at', { ascending: false });
+        // Fetch Price Submissions (تصاريح المواطنين)
+        const { data: subData, error: subError } = await supabase
+          .from('price_submissions')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (subError) {
-        console.error('Erreur Supabase Submissions:', subError);
-      } else if (subData && subData.length > 0) {
-        const formattedSubmissions: MarketSubmission[] = subData.map((item) => {
-          const matchedProd = fetchedProducts.find((p) => p.id === item.product_id);
-          return {
-            id: item.id,
-            productId: item.product_id,
-            productName: matchedProd?.name || 'مادة خضار',
-            price: Number(item.price) || 0,
-            officialPrice: matchedProd?.officialPrice || item.price,
-            districtName: item.district || currentLocation.districtName,
-            wilayaName: item.wilaya || currentLocation.wilayaName,
-            storeType: item.store_type || 'خضار حومة',
-            // 🛡️ حماية الإحداثيات للخارطة باش متطيحش الشاشة بيضاء
-            lat: Number(item.lat) || currentLocation.lat || 36.8065,
-            lng: Number(item.lng) || currentLocation.lng || 10.1815,
-            timestamp: new Date(item.created_at).toLocaleTimeString('ar-TN', {
-              hour: '2-digit',
-              minute: '2-digit',
-            }),
-            votesCount: 1,
-          };
-        });
+        if (subError) {
+          console.error('Erreur Supabase Submissions:', subError);
+        } else if (subData && subData.length > 0) {
+          const currentProdList = fetchedProducts.length > 0 ? fetchedProducts : INITIAL_PRODUCTS;
 
-        // N'dmajou l-Data mta3 DB m3a l-mock initial submissions
-        setSubmissions([...formattedSubmissions, ...INITIAL_SUBMISSIONS]);
+          const formattedSubmissions: MarketSubmission[] = subData.map((item) => {
+            const matchedProd = currentProdList.find((p) => p.id === String(item.product_id));
+            const rawSubPrice = Number(item.price) || 0;
+            const finalSubPrice = rawSubPrice >= 100 ? rawSubPrice / 1000 : rawSubPrice;
+
+            // 🗺️ استخراج إحداثيات آمنة للـ LatLng
+            const coords = getCoordinatesForDistrict(item.district, item.wilaya);
+
+            let formattedTime = 'الآن';
+            if (item.created_at) {
+              try {
+                formattedTime = new Date(item.created_at).toLocaleTimeString('ar-TN', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                });
+              } catch (e) {
+                formattedTime = 'اليوم';
+              }
+            }
+
+            return {
+              id: String(item.id || Date.now()),
+              productId: String(item.product_id || ''),
+              productName: matchedProd?.name || 'مادة خضار',
+              price: finalSubPrice,
+              officialPrice: matchedProd?.officialPrice || finalSubPrice,
+              districtName: item.district || currentLocation.districtName,
+              wilayaName: item.wilaya || currentLocation.wilayaName,
+              storeType: item.store_type || 'خضار حومة',
+              timestamp: formattedTime,
+              votesCount: 1,
+              lat: coords.lat, // 👈 إضافة الإحداثيات حمايةً للـ Leaflet
+              lng: coords.lng, // 👈
+            };
+          });
+
+          setSubmissions([...formattedSubmissions, ...INITIAL_SUBMISSIONS]);
+        }
+      } catch (err) {
+        console.error('Critical Error in fetchData:', err);
       }
     };
 
     fetchData();
   }, []);
 
-  // 🛡️ حماية المنتج المحدد باش ديما يرجع منتج وما يعطيش undefined
+  // اختيار المنتج المحدد
   const selectedProduct =
     products.find((p) => p.id === selectedProductId) ||
     products[0] ||
-    INITIAL_PRODUCTS[0];
+    DEFAULT_FALLBACK_PRODUCT;
 
   // 🎯 2. Handler for Product Addition (Sync DB)
   const handleAddProduct = async (newProduct: Product) => {
-    setProducts((prev) => [...prev, newProduct]);
-    setSelectedProductId(newProduct.id);
+    try {
+      setProducts((prev) => [...prev, newProduct]);
+      setSelectedProductId(newProduct.id);
 
-    const { error } = await supabase.from('products').insert([
-      {
-        name_ar: newProduct.name,
-        category: newProduct.category,
-        official_price: newProduct.officialPrice,
-        emoji: newProduct.emoji,
-      },
-    ]);
+      const safePrice = Number(newProduct.officialPrice) || 0;
 
-    if (error) console.error('Erreur insertion Product DB:', error.message);
+      const { error } = await supabase.from('products').insert([
+        {
+          id: newProduct.id,
+          name_ar: newProduct.name || 'مادة',
+          category: newProduct.category || 'vegetables',
+          official_price: safePrice,
+          emoji: newProduct.emoji || '🛒',
+        },
+      ]);
+
+      if (error) {
+        console.error('Erreur insertion Product DB:', error.message);
+      } else {
+        console.log('🎉 Product tsajjel f-Database b-naja7!');
+      }
+    } catch (err) {
+      console.error('Erreur handleAddProduct:', err);
+    }
   };
 
-  // 🎯 3. Handler for Price Submission (Sync DB with Math.round)
+  // 🎯 3. Handler for Price Submission (Sync DB)
   const handleNewSubmission = async (newSub: MarketSubmission) => {
-    // Ensure fallback coords
-    const completeSub = {
-      ...newSub,
-      lat: newSub.lat || currentLocation.lat,
-      lng: newSub.lng || currentLocation.lng,
-    };
+    try {
+      // إرفاق الإحداثيات مسبقاً قبل التحديث
+      const coords = getCoordinatesForDistrict(newSub.districtName, newSub.wilayaName);
+      const safeSub: MarketSubmission = {
+        ...newSub,
+        lat: newSub.lat || coords.lat,
+        lng: newSub.lng || coords.lng,
+      };
 
-    // UI update immediate
-    setSubmissions((prev) => [completeSub, ...prev]);
+      setSubmissions((prev) => [safeSub, ...prev]);
 
-    // تحويل السوم لعدد صحيح بالمليمات
-    const cleanIntegerPrice = Math.round(Number(newSub.price));
+      const safePrice = Number(newSub.price) || 0;
 
-    // Save to Supabase DB
-    const { error } = await supabase.from('price_submissions').insert([
-      {
-        product_id: newSub.productId || selectedProductId,
-        price: cleanIntegerPrice,
-        district: newSub.districtName || currentLocation.districtName,
-        wilaya: newSub.wilayaName || currentLocation.wilayaName,
-        store_type: newSub.storeType || 'خضار حومة',
-        lat: completeSub.lat,
-        lng: completeSub.lng,
-      },
-    ]);
+      const { error } = await supabase.from('price_submissions').insert([
+        {
+          product_id: newSub.productId || selectedProductId,
+          price: safePrice,
+          district: newSub.districtName || currentLocation.districtName,
+          wilaya: newSub.wilayaName || currentLocation.wilayaName,
+          store_type: newSub.storeType || 'خضار حومة',
+        },
+      ]);
 
-    if (error) {
-      console.error('Erreur insertion Price DB:', error.message);
-    } else {
-      console.log('🎉 Soum tsajjel f-Database b-naja7!');
+      if (error) {
+        console.error('Erreur insertion Price DB:', error.message);
+      } else {
+        console.log('🎉 Soum tsajjel f-Database b-naja7!');
+      }
+    } catch (err) {
+      console.error('Erreur handleNewSubmission:', err);
     }
   };
 
@@ -177,14 +236,6 @@ export default function App() {
       alert('تم نسخ رابط المنصة Bqaddech.tn!');
     }
   };
-
-  if (!selectedProduct) {
-    return (
-      <div className="min-h-screen bg-[#F4F1F8] flex items-center justify-center font-bold text-slate-600">
-        جاري تحميل البيانات... 🇹🇳
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[#F4F1F8] text-slate-800 font-ping-bold flex flex-col selection:bg-emerald-500 selection:text-white">

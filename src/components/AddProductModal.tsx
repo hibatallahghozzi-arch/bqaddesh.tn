@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Product } from '../types';
-import { PlusCircle, X, Sparkles, Tag, DollarSign, Package } from 'lucide-react';
+import { PlusCircle, X, Sparkles, Tag, DollarSign } from 'lucide-react';
 
 interface AddProductModalProps {
   isOpen: boolean;
@@ -31,15 +31,26 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
       setErrorMsg('الرجاء إدخال اسم المادة بالعربية');
       return;
     }
-    const numPrice = parseFloat(price);
+
+    // 💡 1. تحويل السوم بصفة آمنة (قبول الفاصلة والنقطة)
+    let numPrice = parseFloat(price.replace(',', '.'));
+    
     if (isNaN(numPrice) || numPrice <= 0) {
-      setErrorMsg('الرجاء إدخال تسعيرة صحيحة بالدينار (مثال: 2.500)');
+      setErrorMsg('الرجاء إدخال تسعيرة صحيحة بالدينار (مثال: 2.500 أو 2500)');
       return;
     }
 
+    // 💡 2. تحويل ذكي: إذا كتب السوم بالمليم (مثلاً 2000)، نحولوها لدينار (2.000)
+    if (numPrice >= 100) {
+      numPrice = numPrice / 1000;
+    }
+
+    // 💡 3. إنشاء ID نظيف ومقبول في Supabase
+    const cleanId = arName.trim().toLowerCase().replace(/\s+/g, '_') + '_' + Date.now();
+
     const newProduct: Product = {
-      id: 'prod-' + Date.now(),
-      name: frName.trim() || arName.trim(),
+      id: cleanId,
+      name: arName.trim(), // الاستغناء عن الاسم الفرنسي كـ fallback إذا لم يوجد
       arName: arName.trim(),
       emoji: emoji || '🥬',
       officialPrice: numPrice,
@@ -152,9 +163,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
               <div className="relative">
                 <DollarSign className="w-4 h-4 text-slate-400 absolute right-3 top-3" />
                 <input
-                  type="number"
-                  step="0.050"
-                  min="0.100"
+                  type="text"
                   required
                   placeholder="2.000"
                   value={price}
@@ -162,7 +171,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                   className="w-full pr-9 pl-3 py-2.5 text-xs font-black bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
                 />
               </div>
-              <span className="text-[10px] text-slate-400 font-bold block mt-1">بالدينار التونسي (DT)</span>
+              <span className="text-[10px] text-slate-400 font-bold block mt-1">بالدينار أو المليم (مثال: 2.500)</span>
             </div>
 
             <div>
