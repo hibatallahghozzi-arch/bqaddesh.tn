@@ -43,7 +43,7 @@ export default function App() {
       const { data: prodData, error: prodError } = await supabase.from('products').select('*');
       if (prodError) console.error('Erreur Supabase Products:', prodError);
 
-      let fetchedProducts: Product[] = [];
+      let fetchedProducts: Product[] = INITIAL_PRODUCTS;
       if (prodData && prodData.length > 0) {
         fetchedProducts = prodData.map((item) => ({
           id: item.id,
@@ -53,7 +53,9 @@ export default function App() {
           emoji: item.emoji || '🛒',
         }));
         setProducts(fetchedProducts);
-        setSelectedProductId(fetchedProducts[0].id);
+        if (fetchedProducts[0]?.id) {
+          setSelectedProductId(fetchedProducts[0].id);
+        }
       }
 
       // Fetch Price Submissions (تصاريح المواطنين)
@@ -71,11 +73,14 @@ export default function App() {
             id: item.id,
             productId: item.product_id,
             productName: matchedProd?.name || 'مادة خضار',
-            price: item.price,
+            price: Number(item.price) || 0,
             officialPrice: matchedProd?.officialPrice || item.price,
-            districtName: item.district,
-            wilayaName: item.wilaya,
+            districtName: item.district || currentLocation.districtName,
+            wilayaName: item.wilaya || currentLocation.wilayaName,
             storeType: item.store_type || 'خضار حومة',
+            // 🛡️ حماية الإحداثيات للخارطة باش متطيحش الشاشة بيضاء
+            lat: Number(item.lat) || currentLocation.lat || 36.8065,
+            lng: Number(item.lng) || currentLocation.lng || 10.1815,
             timestamp: new Date(item.created_at).toLocaleTimeString('ar-TN', {
               hour: '2-digit',
               minute: '2-digit',
@@ -92,8 +97,11 @@ export default function App() {
     fetchData();
   }, []);
 
+  // 🛡️ حماية المنتج المحدد باش ديما يرجع منتج وما يعطيش undefined
   const selectedProduct =
-    products.find((p) => p.id === selectedProductId) || products[0];
+    products.find((p) => p.id === selectedProductId) ||
+    products[0] ||
+    INITIAL_PRODUCTS[0];
 
   // 🎯 2. Handler for Product Addition (Sync DB)
   const handleAddProduct = async (newProduct: Product) => {
@@ -111,22 +119,32 @@ export default function App() {
 
     if (error) console.error('Erreur insertion Product DB:', error.message);
   };
-// 🎯 3. Handler for Price Submission (Sync DB with Math.round)
-  const handleNewSubmission = async (newSub: MarketSubmission) => {
-    // UI update immediate
-    setSubmissions((prev) => [newSub, ...prev]);
 
-    // 🎯 تحويل السوم لعدد صحيح بالمليمات (من غير فاصل)
+  // 🎯 3. Handler for Price Submission (Sync DB with Math.round)
+  const handleNewSubmission = async (newSub: MarketSubmission) => {
+    // Ensure fallback coords
+    const completeSub = {
+      ...newSub,
+      lat: newSub.lat || currentLocation.lat,
+      lng: newSub.lng || currentLocation.lng,
+    };
+
+    // UI update immediate
+    setSubmissions((prev) => [completeSub, ...prev]);
+
+    // تحويل السوم لعدد صحيح بالمليمات
     const cleanIntegerPrice = Math.round(Number(newSub.price));
 
     // Save to Supabase DB
     const { error } = await supabase.from('price_submissions').insert([
       {
         product_id: newSub.productId || selectedProductId,
-        price: cleanIntegerPrice, // 👈 هنا تفرزت المشكلة
+        price: cleanIntegerPrice,
         district: newSub.districtName || currentLocation.districtName,
         wilaya: newSub.wilayaName || currentLocation.wilayaName,
         store_type: newSub.storeType || 'خضار حومة',
+        lat: completeSub.lat,
+        lng: completeSub.lng,
       },
     ]);
 
@@ -136,8 +154,6 @@ export default function App() {
       console.log('🎉 Soum tsajjel f-Database b-naja7!');
     }
   };
-
-
 
   // Upvote submission
   const handleUpvoteSubmission = (submissionId: string) => {
@@ -161,6 +177,14 @@ export default function App() {
       alert('تم نسخ رابط المنصة Bqaddech.tn!');
     }
   };
+
+  if (!selectedProduct) {
+    return (
+      <div className="min-h-screen bg-[#F4F1F8] flex items-center justify-center font-bold text-slate-600">
+        جاري تحميل البيانات... 🇹🇳
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F4F1F8] text-slate-800 font-ping-bold flex flex-col selection:bg-emerald-500 selection:text-white">
