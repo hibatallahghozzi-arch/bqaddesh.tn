@@ -7,7 +7,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     name: 'Tomate',
     arName: 'طماطم',
     emoji: '🍅',
-    officialPrice: 1.600, // SOTUMAG PMP ~ 1.600 DT/Kg
+    officialPrice: 1.600,
     unit: 'كغ',
     category: 'vegetables',
   },
@@ -16,7 +16,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     name: 'Pomme de terre',
     arName: 'بطاطا',
     emoji: '🥔',
-    officialPrice: 1.500, // SOTUMAG PMP ~ 1.500 DT/Kg
+    officialPrice: 1.500,
     unit: 'كغ',
     category: 'vegetables',
   },
@@ -25,7 +25,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     name: 'Piment / Poivron',
     arName: 'فلفل حار/حلو',
     emoji: '🌶️',
-    officialPrice: 2.400, // SOTUMAG PMP ~ 2.400 DT/Kg
+    officialPrice: 2.400,
     unit: 'كغ',
     category: 'vegetables',
   },
@@ -34,7 +34,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     name: 'Oignon',
     arName: 'بصل جاف',
     emoji: '🧅',
-    officialPrice: 1.300, // SOTUMAG PMP ~ 1.300 DT/Kg
+    officialPrice: 1.300,
     unit: 'كغ',
     category: 'vegetables',
   },
@@ -43,7 +43,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     name: 'Banane',
     arName: 'بنان',
     emoji: '🍌',
-    officialPrice: 5.000, // Plafonné ~ 5.000 DT/Kg
+    officialPrice: 5.000,
     unit: 'كغ',
     category: 'fruits',
   },
@@ -52,7 +52,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     name: 'Pomme',
     arName: 'تفاح',
     emoji: '🍎',
-    officialPrice: 3.200, // SOTUMAG PMP ~ 3.200 DT/Kg
+    officialPrice: 3.200,
     unit: 'كغ',
     category: 'fruits',
   },
@@ -61,7 +61,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     name: 'Citron',
     arName: 'قارص',
     emoji: '🍋',
-    officialPrice: 2.500, // SOTUMAG PMP ~ 2.500 DT/Kg
+    officialPrice: 2.500,
     unit: 'كغ',
     category: 'fruits',
   },
@@ -70,7 +70,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     name: 'Fraise',
     arName: 'فراولة',
     emoji: '🍓',
-    officialPrice: 4.500, // SOTUMAG PMP ~ 4.500 DT/Kg
+    officialPrice: 4.500,
     unit: 'كغ',
     category: 'fruits',
   },
@@ -79,7 +79,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     name: 'Concombre',
     arName: 'خيار',
     emoji: '🥒',
-    officialPrice: 2.100, // SOTUMAG PMP ~ 2.100 DT/Kg
+    officialPrice: 2.100,
     unit: 'كغ',
     category: 'vegetables',
   },
@@ -88,7 +88,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     name: 'Carotte',
     arName: 'سفنارية / جزر',
     emoji: '🥕',
-    officialPrice: 1.200, // SOTUMAG PMP ~ 1.200 DT/Kg
+    officialPrice: 1.200,
     unit: 'كغ',
     category: 'vegetables',
   },
@@ -97,7 +97,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     name: 'Aubergine',
     arName: 'بتنجال / باذنجان',
     emoji: '🍆',
-    officialPrice: 1.800, // SOTUMAG PMP ~ 1.800 DT/Kg
+    officialPrice: 1.800,
     unit: 'كغ',
     category: 'vegetables',
   },
@@ -106,14 +106,13 @@ export const INITIAL_PRODUCTS: Product[] = [
     name: 'Dattes Deglet Nour',
     arName: 'دقلة النور',
     emoji: '🌴',
-    officialPrice: 6.800, // SOTUMAG PMP ~ 6.800 DT/Kg
+    officialPrice: 6.800,
     unit: 'كغ',
     category: 'fruits',
   },
 ];
 
 // Comprehensive All-24 Tunisian Governorates dataset with Delegations & GPS Coordinates
-// Based on official Tunisian admin divisions & Benyoubilel/TUNISIAN-CITIES-JSON
 export const WILAYAS_DATA: Wilaya[] = [
   {
     id: 'ariana',
@@ -387,7 +386,7 @@ export const INITIAL_SUBMISSIONS: MarketSubmission[] = [
     productId: 'tomate',
     marketName: 'سوق الجملة أريانة البلدي',
     sellerType: 'central_market',
-    price: 1.600, // SOTUMAG PMP
+    price: 1.600,
     lat: 36.8625,
     lng: 10.1950,
     timestamp: 'منذ 10 دقائق',
@@ -513,6 +512,43 @@ export const INITIAL_SUBMISSIONS: MarketSubmission[] = [
     timestamp: 'منذ 12 دقيقة',
     districtId: 'ghazela',
     votesCount: 65,
+  },
+  // --- Felfel Submissions ---
+  {
+    id: 'sub-felfel-1',
+    productId: 'felfel',
+    marketName: 'سوق الجملة أريانة البلدي',
+    sellerType: 'central_market',
+    price: 2.400,
+    lat: 36.8625,
+    lng: 10.1950,
+    timestamp: 'منذ 15 دقيقة',
+    districtId: 'ghazela',
+    votesCount: 30,
+  },
+  {
+    id: 'sub-felfel-2',
+    productId: 'felfel',
+    marketName: 'خضار حومة حي الغزالة',
+    sellerType: 'neighborhood',
+    price: 2.700,
+    lat: 36.8920,
+    lng: 10.1880,
+    timestamp: 'منذ 40 دقيقة',
+    districtId: 'ghazela',
+    votesCount: 15,
+  },
+  {
+    id: 'sub-felfel-3',
+    productId: 'felfel',
+    marketName: 'المارشي سنترال تونس',
+    sellerType: 'central_market',
+    price: 2.500,
+    lat: 36.7992,
+    lng: 10.1782,
+    timestamp: 'منذ ساعة',
+    districtId: 'marche_central',
+    votesCount: 20,
   }
 ];
 
@@ -543,5 +579,14 @@ export const MOCK_PRICE_HISTORY: Record<string, PriceHistoryPoint[]> = {
     { date: 'الإثنين', submittedAvg: 5.300, officialPrice: 5.000 },
     { date: 'الثلاثاء', submittedAvg: 5.200, officialPrice: 5.000 },
     { date: 'اليوم', submittedAvg: 5.150, officialPrice: 5.000 },
+  ],
+  felfel: [
+    { date: 'الخميس', submittedAvg: 2.800, officialPrice: 2.400 },
+    { date: 'الجمعة', submittedAvg: 2.750, officialPrice: 2.400 },
+    { date: 'السبت', submittedAvg: 2.850, officialPrice: 2.400 },
+    { date: 'الأحد', submittedAvg: 2.800, officialPrice: 2.400 },
+    { date: 'الإثنين', submittedAvg: 2.700, officialPrice: 2.400 },
+    { date: 'الثلاثاء', submittedAvg: 2.650, officialPrice: 2.400 },
+    { date: 'اليوم', submittedAvg: 2.680, officialPrice: 2.400 },
   ]
 };
